@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import it.polito.tdp.baseball.model.Grado;
+//import it.polito.tdp.baseball.model.Grado;
 import it.polito.tdp.baseball.model.Model;
 import it.polito.tdp.baseball.model.People;
 import javafx.event.ActionEvent;
@@ -45,7 +45,7 @@ public class FXMLController {
     @FXML
     private TextField txtYear;
 
-    
+    private boolean gradoCreato = false;
     
     @FXML
     void doCalcolaConnesse(ActionEvent event) {
@@ -56,6 +56,31 @@ public class FXMLController {
     
     @FXML
     void doCreaGrafo(ActionEvent event) {
+    	
+    	String inputAnno = this.txtYear.getText();
+    	String inputSalario = this.txtSalary.getText();
+    	
+    	//controllo input 
+    	if (inputAnno =="" || inputSalario == "") {
+    		txtResult.setText("Errore : Non e' stato inserito dato");
+    	}
+    	
+    	//conversione
+    	Integer anno = 0;
+    	Double salario = 0.0;
+    	try {
+    		anno = Integer.parseInt(inputAnno);
+        	 salario = Double.parseDouble(inputSalario);
+    	} catch (NumberFormatException e ) {
+    		txtResult.setText("Errore : non sono stati inseriti dei valori validi");
+    		return;
+    	}
+    	
+    	model.creaGrafo(anno, salario);
+    	txtResult.appendText("Grafo creato!\n#Vertici: " + this.model.getNumVertici() + "\n#Archi: " + this.model.getNumVertici());
+    	
+    	
+    	
     	
     }
 
