@@ -22,6 +22,11 @@ public class Model {
 	private List<People> vertici;
 	private List<Arco> archi;
 	
+	//ricorsione 
+	private int numGiocatori;
+	private double salarioTot;
+	private List<People> dreamTeam;
+	
 	
 	public Model() {
 		
@@ -112,6 +117,80 @@ public class Model {
 		List<Set<People>> listaConnesse = ci.connectedSets();
 		
 		return listaConnesse.size();
+	}
+	
+	
+	//ricorsione 
+	
+	public List<People> getDreamTeam() {
+		
+		this.dreamTeam = new ArrayList<>();
+		this.numGiocatori = 0;
+		this.salarioTot =0.0;
+		
+		//dominio  --> all'inizio tutti i vertici ma poi piano piano bisogna togliere tutti i nodi successori in quanto 
+		//per come e' costruito il grafo, due nodi sono connessi se sono stati nello stesso team quel'anno;
+		List<People> dominioIniziale = new ArrayList<>(this.grafo.vertexSet());
+		
+		//togliere tutti i nodi isolati
+		List<People> isolati = new ArrayList<>();
+		for (People p : this.vertici) {
+			if (this.grafo.outDegreeOf(p)==0) {
+				isolati.add(p);
+			}
+		}
+		dominioIniziale.removeAll(isolati);
+		
+		List<People> parziale = new ArrayList<>();
+		
+		ricorsione(parziale, dominioIniziale);
+		
+		return this.dreamTeam;
+		
+	}
+	
+	private void ricorsione(List<People> parziale, List<People> dominio) {
+		
+		if (dominio.isEmpty()) {
+			
+			double money = getSalarioTotale(parziale);
+			if (money > this.salarioTot) {
+				if (parziale.size() >= this.numGiocatori) {
+					this.numGiocatori = parziale.size();
+					this.salarioTot = money;
+					this.dreamTeam = new ArrayList<>(parziale);
+				}
+			}
+			return;
+		}
+		
+		if (parziale.size() > this.numGiocatori) {
+			this.numGiocatori = parziale.size();
+			this.dreamTeam = new ArrayList<>(parziale);
+		}
+		
+		for (People p : dominio) {
+			if (!parziale.contains(p)) {
+				parziale.add(p);
+				
+				List<People> newDominio = new ArrayList<>(dominio);
+				newDominio.remove(p);
+				newDominio.removeAll(Graphs.neighborListOf(this.grafo, p));
+				
+				ricorsione(parziale, newDominio);
+				parziale.remove(parziale.size()-1);
+				
+			}
+		}
+	}
+
+
+	private double getSalarioTotale(List<People> parziale) {
+		// TODO Auto-generated method stub
+		
+		double salarioTot = 0.0;
+	
+		return 0;
 	}
 	
 	
