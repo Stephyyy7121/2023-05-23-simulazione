@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jgrapht.Graph;
 import org.jgrapht.Graphs;
+import org.jgrapht.alg.connectivity.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
@@ -14,68 +16,105 @@ import it.polito.tdp.baseball.db.BaseballDAO;
 
 public class Model {
 	
-	BaseballDAO dao;
-	
-	Graph<People, DefaultEdge> grafo;
-	List<People> vertici;
-	//lista archi
-	
-	
-	//necessario avere un IdentityMap per potere ottenere l'oggeto People a partire dall'id dei giocatori
-	Map<String, People> idMapPlayer;
+	private BaseballDAO dao ;
+	private Map<String, People> idMapPlayer;
+	private Graph<People, DefaultEdge> grafo;
+	private List<People> vertici;
+	private List<Arco> archi;
 	
 	
 	public Model() {
 		
-		dao = new BaseballDAO();
-		this.grafo = new SimpleGraph<People,DefaultEdge>(DefaultEdge.class);
+		this.dao = new BaseballDAO();
 		this.idMapPlayer = new HashMap<>();
+		this.grafo = new SimpleGraph<>(DefaultEdge.class);
+		this.archi = new ArrayList<>();
+	}
+	
+	
+	public void riempireIdMap() {
 		
+		List<People> allPlayer = this.dao.readAllPlayers();
+		
+		for (People p: allPlayer) {
+			
+			if (this.idMapPlayer.get(p.getPlayerID())== null) {
+				this.idMapPlayer.put(p.getPlayerID(), p);
+			}
+		}
 	}
 	
-	public Map<String, People> getIdMapPlayer() {
-		return this.idMapPlayer;
-	}
-	
-	public void loadNodes(int anno, double salario) {
+	public void loadNodes(int year, double salary) {
+		
+		riempireIdMap();
 		
 		if (this.vertici.isEmpty()) {
-			this.vertici = dao.getVertices(anno, salario);
+			this.vertici = this.dao.getVertici(year, salary, idMapPlayer);
 		}
 	}
 	
 	public void clearGraph() {
 		
-		this.grafo =  new SimpleGraph<People,DefaultEdge>(DefaultEdge.class);
+		this.grafo = new SimpleGraph<>(DefaultEdge.class);
 		this.vertici = new ArrayList<>();
 	}
 	
-	public void creaGrafo(int anno, double salario) {
+	public void creaGrafo(int year, double salary) {
 		
 		clearGraph();
-		loadNodes(anno, salario);
+		loadNodes(year, salary);
 		
 		Graphs.addAllVertices(this.grafo, this.vertici);
 		
+		if (this.archi.isEmpty()) {
+			this.archi = this.dao.getArchi(year, salary, idMapPlayer);
+		}
+		
+		for (Arco a : this.archi) {
+			People source = a.getSource();
+			People target = a.getTarget();
+			if (this.vertici.contains(source) && this.vertici.contains(target)) {
+				this.grafo.addEdge(source, target);
+			}
+			
+		}
+	}
+	
+	public List<People> getVertici() {
+		return this.vertici;
+	}
+	
+	public int numArchi() {
+		return this.grafo.edgeSet().size();
+	}
+	
+	
+	public People gradoMassimo() {
+		
+		People massimo = null;
+		int grado = 0;
 		for (People p : this.vertici) {
-			idMapPlayer.put(p.getPlayerID(), p);
+			
+			int cuurentGrado = this.grafo.outDegreeOf(p);
+			if (cuurentGrado > grado) {
+				grado = cuurentGrado;
+				massimo  = p ;
+			}
 		}
 		
-		
-		//archi --> due vertici sono connessi se hanno giocato nella stessa squadra nell'anno indicato in input 
-		List<Arco> archi = dao.getEdge(anno, salario, idMapPlayer);
-		
-		for (Arco a : archi) {
-			this.grafo.addEdge(a.getSource(), a.getTarget());
-		}
+		return massimo;
 	}
 	
-	public int getNumVertici() {
-		return this.grafo.edgeSet().size();
+	
+	public int numComponentiConnesse() {
+		
+		ConnectivityInspector<People, DefaultEdge> ci = new ConnectivityInspector<>(grafo);
+		List<Set<People>> listaConnesse = ci.connectedSets();
+		
+		return listaConnesse.size();
 	}
 	
-	public int getNumArchi() {
-		return this.grafo.edgeSet().size();
-	}
-	}
+	
+	
+}
 	

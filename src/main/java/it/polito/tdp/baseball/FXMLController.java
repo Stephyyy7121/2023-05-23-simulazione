@@ -50,6 +50,13 @@ public class FXMLController {
     @FXML
     void doCalcolaConnesse(ActionEvent event) {
     	
+    	txtResult.clear();
+    	if (!this.gradoCreato) {
+    		txtResult.appendText("Il grafo non e' stato creato\n");
+    	}
+    	
+    	int num = this.model.numComponentiConnesse();
+    	txtResult.appendText("Ci sono " + num + " componenti connesse\n");
     }
 
     
@@ -57,31 +64,39 @@ public class FXMLController {
     @FXML
     void doCreaGrafo(ActionEvent event) {
     	
-    	String inputAnno = this.txtYear.getText();
-    	String inputSalario = this.txtSalary.getText();
+    	txtResult.clear();
     	
-    	//controllo input 
-    	if (inputAnno =="" || inputSalario == "") {
-    		txtResult.setText("Errore : Non e' stato inserito dato");
+    	String inputSalary = txtSalary.getText();
+    	String inputAnno = txtYear.getText();
+    	
+    	if (inputSalary.compareTo("") ==0 || inputAnno.compareTo("")==0) {
+    		txtResult.appendText("Inserire valore\n");
     	}
     	
-    	//conversione
-    	Integer anno = 0;
-    	Double salario = 0.0;
+    	int anno = 0;
+    	double salary = 0.0;
+    	
     	try {
     		anno = Integer.parseInt(inputAnno);
-        	 salario = Double.parseDouble(inputSalario);
-    	} catch (NumberFormatException e ) {
-    		txtResult.setText("Errore : non sono stati inseriti dei valori validi");
-    		return;
+    		salary = Double.parseDouble(inputSalary)*1000000;
+    		
+    	}catch (NumberFormatException e ) {
+    		txtResult.appendText("Non sono statri inseriti dei valori accettabili\n");
+    		return ;
     	}
     	
-    	model.creaGrafo(anno, salario);
-    	txtResult.appendText("Grafo creato!\n#Vertici: " + this.model.getNumVertici() + "\n#Archi: " + this.model.getNumVertici());
+    	if (salary <= 0) {
+    		txtResult.appendText("Inserire uno stipendio positivo\n");
+    	}
+    	if (anno < 1871 || anno > 2019) {
+    		txtResult.appendText("Inserire anno compreso tra 1871 e 2019\n");
+    	}
     	
-    	
-    	
-    	
+    	this.model.creaGrafo(anno, salary);
+    	this.gradoCreato = true;
+    	txtResult.appendText("Grafo creato !\n#Vertici: " + this.model.getVertici().size() + "\n#Archi: " + this.model.numArchi()+"\n");
+    	this.btnConnesse.setDisable(false);
+    	this.btnGradoMassimo.setDisable(false);
     }
 
     
@@ -94,6 +109,14 @@ public class FXMLController {
     @FXML
     void doGradoMassimo(ActionEvent event) {
 
+
+    	txtResult.clear();
+    	if (!this.gradoCreato) {
+    		txtResult.appendText("Il grafo non e' stato creato\n");
+    	}
+    	
+    	People p = this.model.gradoMassimo();
+    	txtResult.appendText("Il vertice con nodo massimo e' : " + p +"\n");
     }
 
     
